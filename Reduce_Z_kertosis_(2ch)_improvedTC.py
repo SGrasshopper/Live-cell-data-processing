@@ -103,7 +103,7 @@ def reduceZ():
     imp5 = IJ.getImage()
     #imp5 = HyperStackConverter.toHyperStack(imp5, 2, 1, numframes, "Color")
     #imp5.setDimensions(numChannels, 1, numframes)
-    IJ.run(imp5, "Bio-Formats Exporter", "save=/home/rickettsia/Desktop/data/Clamydial_Image_Analysis/hctbmkate_euonglva_pen_36-01-20-2022/Z_reduced/" + title + ".ome.tif export compression=LZW")
+    IJ.run(imp5, "Bio-Formats Exporter", "save=/home/rickettsia/Desktop/data/Clamydial_Image_Analysis/hctbmkate_euonglva_cip_26-02-01-2022/z_reduced/" + title + ".ome.tif export compression=LZW")
     IJ.selectWindow('Merged')
     IJ.run("Close")
 
