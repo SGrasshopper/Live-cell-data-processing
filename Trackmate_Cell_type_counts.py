@@ -1,11 +1,7 @@
-#from fiji.plugin.trackmate.detection import BlockLogDetectorFactory
 from fiji.plugin.trackmate.detection import LogDetectorFactory
-#from fiji.plugin.trackmate.features.spot import SpotIntensityAnalyzerFactory
 from fiji.plugin.trackmate.features.spot import SpotContrastAndSNRAnalyzerFactory
 import fiji.plugin.trackmate.tracking.sparselap.SparseLAPTrackerFactory as SparseLAPTrackerFactory
-#import fiji.plugin.trackmate.extra.spotanalyzer.SpotMultiChannelIntensityAnalyzerFactory as SpotMultiChannelIntensityAnalyzerFactory
 from fiji.plugin.trackmate.tracking.sparselap import SparseLAPTrackerFactory
-#from fiji.plugin.trackmate.tracking.oldlap import SimpleLAPTrackerFactory
 from fiji.plugin.trackmate.gui.displaysettings import DisplaySettingsIO
 from fiji.plugin.trackmate.tracking import LAPUtils
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer as HyperStackDisplayer
@@ -52,8 +48,8 @@ settings.addAllAnalyzers()
 settings.detectorFactory = LogDetectorFactory()
 settings.detectorSettings = settings.detectorFactory.getDefaultSettings()
 settings.detectorSettings['TARGET_CHANNEL'] = 2
-settings.detectorSettings['RADIUS'] = 3.0
-settings.detectorSettings['THRESHOLD'] = 10.0
+settings.detectorSettings['RADIUS'] = 2.2
+settings.detectorSettings['THRESHOLD'] = 25.0
 
 # Spot tracker.
 # Configure tracker - We don't want to allow merges or splits
@@ -69,8 +65,8 @@ settings.trackerSettings['MAX_FRAME_GAP'] = 1
 settings.addTrackAnalyzer(TrackDurationAnalyzer())
 settings.addTrackAnalyzer(TrackSpotQualityFeatureAnalyzer())
 
-#filter1 = FeatureFilter('TRACK_DURATION', 20, True)
-#settings.addTrackFilter(filter1)
+filter1 = FeatureFilter('TRACK_DURATION', 4, True)
+settings.addTrackFilter(filter1)
 
 # Run TrackMate and store data into Model.
 model = Model()
