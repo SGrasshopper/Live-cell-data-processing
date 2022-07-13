@@ -1,18 +1,18 @@
-from fiji.plugin.trackmate.detection import BlockLogDetectorFactory
+#from fiji.plugin.trackmate.detection import BlockLogDetectorFactory
 from fiji.plugin.trackmate.detection import LogDetectorFactory
-from fiji.plugin.trackmate.features.spot import SpotIntensityAnalyzerFactory
+#from fiji.plugin.trackmate.features.spot import SpotIntensityAnalyzerFactory
 from fiji.plugin.trackmate.features.spot import SpotContrastAndSNRAnalyzerFactory
 import fiji.plugin.trackmate.tracking.sparselap.SparseLAPTrackerFactory as SparseLAPTrackerFactory
-import fiji.plugin.trackmate.extra.spotanalyzer.SpotMultiChannelIntensityAnalyzerFactory as SpotMultiChannelIntensityAnalyzerFactory
+#import fiji.plugin.trackmate.extra.spotanalyzer.SpotMultiChannelIntensityAnalyzerFactory as SpotMultiChannelIntensityAnalyzerFactory
 from fiji.plugin.trackmate.tracking.sparselap import SparseLAPTrackerFactory
-from fiji.plugin.trackmate.tracking.oldlap import SimpleLAPTrackerFactory
+#from fiji.plugin.trackmate.tracking.oldlap import SimpleLAPTrackerFactory
+from fiji.plugin.trackmate.gui.displaysettings import DisplaySettingsIO
 from fiji.plugin.trackmate.tracking import LAPUtils
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer as HyperStackDisplayer
 import fiji.plugin.trackmate.features.FeatureFilter as FeatureFilter
 import fiji.plugin.trackmate.features.track.TrackDurationAnalyzer as TrackDurationAnalyzer
 import fiji.plugin.trackmate.features.track.TrackSpotQualityFeatureAnalyzer as TrackSpotQualityFeatureAnalyzer
 import fiji.plugin.trackmate.SelectionModel as SelectionModel
-import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer as HyperStackDisplayer
 import fiji.plugin.trackmate.Settings as Settings
 import fiji.plugin.trackmate.Model as Model
 import fiji.plugin.trackmate.TrackMate as TrackMate
@@ -37,21 +37,23 @@ from ij import ImagePlus
 #IJ.run("Stack to Hyperstack...", "order=xyczt(default) channels=2 slices=1 frames=45 display=Color");
  
 imp5 = IJ.getImage()
+IJ.run("Re-order Hyperstack ...", "channels=[Channels (c)] slices=[Frames (t)] frames=[Slices (z)]")
+imp5 = IJ.getImage()
+orgtitle = imp5.getTitle()
     
 nChannels = imp5.getNChannels()
 # Setup settings for TrackMate
-settings = Settings()
-settings.setFrom(imp5)
+settings = Settings(imp5)
 
 # Spot analyzer: we want the multi-C intensity analyzer.
-settings.addSpotAnalyzerFactory(SpotMultiChannelIntensityAnalyzerFactory())   
+settings.addAllAnalyzers() 
 
 # Spot detector.
 settings.detectorFactory = LogDetectorFactory()
 settings.detectorSettings = settings.detectorFactory.getDefaultSettings()
-settings.detectorSettings['TARGET_CHANNEL'] = 1
-settings.detectorSettings['RADIUS'] = 1.30
-settings.detectorSettings['THRESHOLD'] = 23.0
+settings.detectorSettings['TARGET_CHANNEL'] = 2
+settings.detectorSettings['RADIUS'] = 3.0
+settings.detectorSettings['THRESHOLD'] = 10.0
 
 # Spot tracker.
 # Configure tracker - We don't want to allow merges or splits
@@ -83,7 +85,9 @@ if not ok:
     sys.exit(str(trackmate.getErrorMessage()))
 
 selectionModel = SelectionModel(model)
-displayer =  HyperStackDisplayer(model, selectionModel, imp5)
+
+ds = DisplaySettingsIO.readUserDefault()
+displayer =  HyperStackDisplayer(model, selectionModel, imp5, ds)
 displayer.render()
 displayer.refresh()
 
@@ -98,30 +102,35 @@ for i in range( nChannels ):
     rowStr += ( ' %10.1f' )
 
 #open a file to save results
-myfile = open('/Users/scottgrieshaber/Documents/HctALVA_counts_test/test/test.csv', 'wb')
+myfile = open('/Users/scottgrieshaber/Documents/'+orgtitle.split('.')[0]+'.csv', 'wb')
 wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-wr.writerow(['Spot_ID', 'Track_ID', 'Frame', 'X', 'Y', 'Z', 'Channel_1', 'Channel_2'])
+wr.writerow(['Spot_ID', 'Track_ID', 'Frame', 'X', 'Y', 'Z', 'Channel_1', 'Channel_2', 'Channel_3'])
 
 IJ.log('\n')
 IJ.log(headerStr)
 tm = model.getTrackModel()
 trackIDs = tm.trackIDs(True)
-print(tm)   
+
 for trackID in trackIDs:
     spots = tm.trackSpots(trackID)
-
-    # Let's sort them by frame.
+    
+    # Let's sort them by frame
     ls = ArrayList(spots)
+    #ls.sort(Spot.frameComparator)
+    
     for spot in ls:
-        values = [spot.ID(), trackID, spot.getFeature('FRAME'), 
+        values = [spot.ID(), trackID, spot.getFeature('FRAME'), \
             spot.getFeature('POSITION_X'), spot.getFeature('POSITION_Y'), spot.getFeature('POSITION_Z')]
+        
         for i in range(nChannels):
-            values.append(spot.getFeature('MEAN_INTENSITY%02d' % (i+1)))
+            IJ.log(str(i+1))
+            #values.append(spot.getFeature('MEAN_INTENSITY%02d' % (i+1))
+            values.append(spot.getFeature('MEAN_INTENSITY_CH{}'.format(i+1)))
             
+        IJ.log(str(values))
         IJ.log(rowStr % tuple(values))
-        l1 = (values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7])
+        l1 = (values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8])
         wr.writerow(l1)
-
 myfile.close()
 #IJ.selectWindow("Merged")
 #IJ.run("Close")
